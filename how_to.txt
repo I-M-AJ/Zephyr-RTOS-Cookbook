@@ -1,0 +1,267 @@
+Chapter 2: Install and Run
+==========================
+
+This guide covers the sample in chapter2/my_app. It prints "Hello from
+Zephyr" and can be run in QEMU without a development board.
+
+The repository's west.yml pins Zephyr v4.4.1 and imports its required
+modules. Run the West commands below from the repository root, where
+west.yml is located. Do not initialize a separate upstream Zephyr
+manifest; use `west init -l .` to use this repository's manifest.
+
+Recommended setup: WSL 2 / Linux
+--------------------------------
+
+Install WSL 2 with Ubuntu 24.04, then open the Ubuntu terminal. It is
+recommended to keep a Linux checkout under your WSL home directory rather
+than build from /mnt/c or /mnt/f. Do not share build directories between
+Windows and WSL.
+
+Clone the repository and install Linux host dependencies:
+
+    git clone https://github.com/I-M-AJ/Zephyr-RTOS-Cookbook.git ~/Zephyr-RTOS-Cookbook
+    cd ~/Zephyr-RTOS-Cookbook
+
+    sudo apt update
+    sudo apt install --no-install-recommends git cmake ninja-build gperf ccache \
+      dfu-util device-tree-compiler wget python3-dev python3-venv python3-tk \
+      xz-utils file make gcc gcc-multilib g++-multilib libsdl2-dev libmagic1
+
+Zephyr 4.4.1 requires Python 3.12 or newer, CMake 3.20.5 or newer, and
+Device Tree Compiler 1.4.6 or newer. Check with:
+
+    python3 --version
+    cmake --version
+    dtc --version
+
+Create a Python virtual environment, install West, fetch the manifest's
+Zephyr source/modules, and install the SDK:
+
+    python3 -m venv ~/.venvs/zephyr
+    source ~/.venvs/zephyr/bin/activate
+    python -m pip install --upgrade pip west
+
+    west init -l .
+    west update
+    west zephyr-export
+    west packages pip --install
+    west sdk install
+
+Build and run Chapter 2 in QEMU:
+
+    west build -p always -b qemu_x86 chapter2/my_app -t run
+
+The terminal should show "Hello from Zephyr". Exit QEMU by pressing
+Ctrl+A, then X.
+Activate the virtual environment (`source ~/.venvs/zephyr/bin/activate`)
+again whenever opening a new terminal to continue working.
+
+Native Windows 11
+-----------------
+
+Install Git for Windows, Python 3.12 or newer, CMake 3.20.5 or newer,
+Ninja, Device Tree Compiler 1.4.6 or newer, GPerf, and the Zephyr SDK.
+Make sure the command-line tools are available on PATH. The SDK provides
+the cross-compilers and QEMU host tools. VS Code and the Workbench for
+Zephyr extension are recommended by this repository and can help configure
+the development environment.
+
+If `py -3.12` reports that no matching runtime is installed, install and
+verify Python 3.12 in PowerShell before creating the virtual environment:
+
+    py install 3.12
+    py -3.12 --version
+
+Open PowerShell and change to the repository root. Create/activate a
+virtual environment and install West:
+
+    py -3.12 -m venv "$HOME\.venvs\zephyr"
+    & "$HOME\.venvs\zephyr\Scripts\Activate.ps1"
+    python -m pip install --upgrade pip west
+
+Then, from the repository root (the directory containing west.yml):
+
+    west init -l .
+    west update
+    west zephyr-export
+    west packages pip --install
+    west sdk install
+
+Build and run Chapter 2:
+
+    west build -p always -b qemu_x86 chapter2/my_app -t run
+
+The terminal should show "Hello from Zephyr". Exit QEMU by pressing
+Ctrl+A, then X.
+Activate the virtual environment in each new PowerShell session before
+running West commands.
+
+Windows 11 troubleshooting
+--------------------------
+
+* `py -3.12` reports "No runtime installed that matches 3.12":
+  Install Python 3.12 with `py install 3.12`, verify it with
+  `py -3.12 --version`, then retry the virtual environment command above.
+
+* `Activate.ps1` reports that running scripts is disabled:
+  Allow locally created scripts in the current PowerShell process only,
+  then retry activation:
+
+      Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+      & "$HOME\.venvs\zephyr\Scripts\Activate.ps1"
+
+  This setting ends when the PowerShell window closes. If a managed policy
+  prevents the change, contact the system administrator.
+
+* `west init -l .` reports "already initialized" in a parent directory:
+  West searches parent directories for an existing workspace. Check its
+  root and manifest path from the repository directory:
+
+      west topdir
+      west config manifest.path
+      west config --list
+
+  The manifest path is relative to the workspace root. Check that the
+  configured manifest file is west.yml (the default if not configured).
+  If it points to this repository and its west.yml, skip `west init` and
+  continue with `west update`, `west zephyr-export`,
+  `west packages pip --install`, and `west sdk install`. If it points
+  elsewhere, investigate the existing workspace before proceeding. Do not
+  delete its `.west` directory.
+
+Notes
+-----
+
+* Run `west init -l .` only once for a workspace. An existing `.west`
+  directory may be in the repository or a parent directory; check its
+  manifest before using it as described above.
+* `west update` downloads Zephyr and the modules pinned by the repository's
+  manifest. It requires an internet connection and can take some time.
+* `west sdk install` installs the Zephyr SDK, including toolchains and
+  host tools. The download can be large.
+* `qemu_x86` is for simulation and does not require a physical board. To
+  run on hardware instead, build for the board's Zephyr board target and
+  use `west flash`; the board and debug probe may need additional setup.
+* If PowerShell cannot find a command such as `west`, verify that the
+  virtual environment is activated and that the required native tools
+  are installed and on PATH.
+
+Running Chapters 3-8
+--------------------
+
+The setup above is shared by all chapters. From the repository root, use
+the following command for the software-only examples in Chapters 3, 6, 7,
+and 8:
+
+Linux / WSL:
+
+    west build -p always -b qemu_x86 <APP_DIR> -t run
+
+Windows PowerShell:
+
+    west build -p always -b qemu_x86 <APP_DIR> -t run
+    example: west build -p always -b qemu_x86 .\chapter3\kconfig_hello -t run
+
+Replace `<APP_DIR>` with one of the QEMU-compatible application
+directories listed below. Run one command at a time; the pristine option
+ensures the build is reconfigured for that application. Chapters 4 and 5
+have board-specific examples and are covered separately below.
+
+Chapter 3 - Kconfig:
+
+    chapter3/kconfig_hello
+    chapter3/kconfig_toto
+
+Chapter 6 - Initialization and Threads:
+
+    chapter6/init_toto
+    chapter6/multithreaded_toto
+    chapter6/multithreaded_toto2
+    chapter6/multithreaded_toto3
+    chapter6/multithreaded_toto4
+    chapter6/workqueue_toto
+
+Chapter 7 - Subsystems:
+
+    chapter7/myrandom
+    chapter7/myrandom2
+    chapter7/myrandom3
+    chapter7/myrandom4
+    chapter7/my_philosophers
+
+Chapter 8 - User Mode:
+
+    chapter8/user_toto
+    chapter8/user_toto2
+    chapter8/user_syscall_toto
+    chapter8/user_apps_toto
+
+Chapter 4 - Devicetree (physical board required):
+
+    chapter4/hello_world
+
+Chapter 5 - Drivers (physical board required):
+
+    chapter5/mygpios
+    chapter5/mytotoled
+    chapter5/my_adc
+
+These applications use board GPIO/ADC hardware. `mygpios` and `mytotoled`
+provide overlays for the FRDM-MCXN236; `my_adc` provides overlays for the
+FRDM-MCXN236 and Nucleo-H563ZI. An external LED with a current-limiting
+resistor and/or a potentiometer may be needed to exercise the GPIO and ADC
+pins; follow the board pinout and the overlay before wiring anything.
+
+For example, to run Chapter 3's first application in QEMU:
+
+    west build -p always -b qemu_x86 chapter3/kconfig_hello -t run
+
+In PowerShell, use Windows-style separators for the application path, for
+example:
+
+    west build -p always -b qemu_x86 chapter3\kconfig_hello -t run
+
+Running a hardware application:
+
+    west build -p always -b <BOARD_TARGET> <APP_DIR>
+    west flash
+
+Get the exact target names available in this checkout with `west boards`.
+For example, the FRDM-MCXN236 target is `frdm_mcxn236/mcxn236` in Zephyr
+4.4.1. Use a serial terminal connected to the board's console UART to see
+`printk` output. Flashing may require a board/debug-probe host tool; install
+the tool reported by `west flash` if it is not already available.
+
+Additional installation and hardware notes
+-------------------------------------------
+
+* Chapters 3, 6, 7, and 8 do not require extra packages beyond the common
+  Zephyr setup above when run in QEMU.
+* The root manifest includes the Percepio module used by the Chapter 7
+  philosophers app. `west update` fetches it; there is no separate build
+  dependency to install. Percepio Tracealyzer is optional if you want to
+  inspect trace data.
+* Chapters 4 and 5 require a supported development board for the examples
+  that use board-specific ADC/GPIO devicetree. For actual experiments,
+  provide the peripherals and wiring required by the app and board
+  overlay; the book recommends an LED and potentiometer (or its Rich
+  Shield).
+* For hardware flashing from WSL, the USB debug probe/serial device must
+  be made available to WSL, commonly using usbipd-win on Windows. Linux
+  may also need udev rules for the debug probe. QEMU-only runs do not
+  need USB passthrough, a board, or extra debug software.
+* The SDK includes toolchains and QEMU host tools. If installing only
+  selected toolchains, include x86 for QEMU and the architecture used by
+  your chosen physical board.
+
+Official references
+-------------------
+
+Zephyr 4.4.1 Getting Started:
+https://docs.zephyrproject.org/4.4.1/develop/getting_started/index.html
+
+Zephyr SDK:
+https://docs.zephyrproject.org/4.4.1/develop/toolchains/zephyr_sdk.html
+
+QEMU x86 board:
+https://docs.zephyrproject.org/4.4.1/boards/qemu/x86/doc/index.html
