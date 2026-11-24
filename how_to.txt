@@ -75,8 +75,7 @@ verify Python 3.12 in PowerShell before creating the virtual environment:
 Open PowerShell and change to the repository root. Create/activate a
 virtual environment and install West:
 
-    py -3.12 -m venv "$HOME\.venvs\zephyr"
-    & "$HOME\.venvs\zephyr\Scripts\Activate.ps1"
+    py -3.12 -m venv "$HOME\.venvs\zephyr" & "$HOME\.venvs\zephyr\Scripts\Activate.ps1"
     python -m pip install --upgrade pip west
 
 Then, from the repository root (the directory containing west.yml):
@@ -91,6 +90,13 @@ Build and run Chapter 2:
 
     west build -p always -b qemu_x86 chapter2/my_app -t run
 
+    in a new terminal:
+    Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+    & "$HOME\.venvs\zephyr\Scripts\Activate.ps1"
+    $env:Path = "C:\Program Files\CMake\bin;$env:Path"
+    cmake --version
+    west build -p always -b qemu_x86 chapter2\my_app -t run
+    
 The terminal should show "Hello from Zephyr". Exit QEMU by pressing
 Ctrl+A, then X.
 Activate the virtual environment in each new PowerShell session before
